@@ -12,23 +12,23 @@ var logger *golog.Logger
 var verbosity Level
 var verbositySet bool
 
-//Level is used to set verbosity of your app
+// Level is used to set verbosity of your app
 type Level int
 
 const (
-	//LogLevelNone - log nothing
+	//LevelNone - log nothing
 	LevelNone Level = iota
-	//LogLevelError - logs only errors
+	//LevelError - logs only errors
 	LevelError
-	//LogLevelWarning  - logs warning and errors
+	//LevelWarning  - logs warning and errors
 	LevelWarning
-	//LogLevelTest - logs only debug messages
+	//LevelTest - logs only debug messages
 	LevelTest
-	//LogLevelInfo - logs info, warining and errors
+	//LevelInfo - logs info, warining and errors
 	LevelInfo
 )
 
-//getVerbosity defaults verbosity to LogLevelWarning if a verbosity is not set
+// getVerbosity defaults verbosity to LogLevelWarning if a verbosity is not set
 func getVerbosity() Level {
 	if !verbositySet {
 		return LevelWarning
@@ -36,18 +36,18 @@ func getVerbosity() Level {
 	return verbosity
 }
 
-//SetLogLevel sets log level
+// SetLogLevel sets log level
 func SetLogLevel(l Level) {
 	verbosity = l
 	verbositySet = true
 }
 
-//SetLogger sets Logger
+// SetLogger sets Logger
 func SetLogger(l *golog.Logger) {
 	logger = l
 }
 
-func printlog(message string) {
+func printLog(message string) {
 	if logger != nil {
 		logger.Println(message)
 	} else {
@@ -55,33 +55,33 @@ func printlog(message string) {
 	}
 }
 
-//Info prints out informational messages
+// Info prints out informational messages
 func Info(message string) {
 	if getVerbosity() >= LevelInfo {
-		printlog(message)
+		printLog(message)
 	}
 }
 
-//Error prints out error messages
+// Error prints out error messages
 func Error(message string) {
 	if getVerbosity() >= LevelError {
 		_, fn, line, _ := runtime.Caller(1)
-		printlog(fmt.Sprintf("ERROR: %s (%s:%d)", message, filepath.Base(fn), line))
+		printLog(fmt.Sprintf("ERROR: %s (%s:%d)", message, filepath.Base(fn), line))
 	}
 }
 
-//Warn prints out warning messages
+// Warn prints out warning messages
 func Warn(message string) {
 	if getVerbosity() >= LevelWarning {
 		_, fn, line, _ := runtime.Caller(1)
-		printlog(fmt.Sprintf("WARNING: %s (%s:%d)", message, filepath.Base(fn), line))
+		printLog(fmt.Sprintf("WARNING: %s (%s:%d)", message, filepath.Base(fn), line))
 	}
 }
 
-//Test prints out debugging or test messages
+// Test prints out debugging or test messages
 func Test(message string) {
 	if getVerbosity() == LevelTest {
 		_, fn, line, _ := runtime.Caller(1)
-		printlog(fmt.Sprintf("DEBUG: %s (%s:%d)", message, filepath.Base(fn), line))
+		printLog(fmt.Sprintf("DEBUG: %s (%s:%d)", message, filepath.Base(fn), line))
 	}
 }

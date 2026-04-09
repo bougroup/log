@@ -1,3 +1,3 @@
-module github.com/bouggo/log
+module github.com/bougroup/log
 
-go 1.14
+go 1.26.1
