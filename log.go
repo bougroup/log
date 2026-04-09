@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	golog "log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -84,4 +85,9 @@ func Test(message string) {
 		_, fn, line, _ := runtime.Caller(1)
 		printLog(fmt.Sprintf("DEBUG: %s (%s:%d)", message, filepath.Base(fn), line))
 	}
+}
+
+func Fatal(message string) {
+	Error(message)
+	os.Exit(1)
 }
