@@ -6,9 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 )
 
+// logMu guards the logger/verbosity configuration below so SetLogLevel and
+// SetLogger can be called safely while other goroutines are logging.
+var logMu sync.RWMutex
 var logger *golog.Logger
 var verbosity Level
 var verbositySet bool
@@ -31,6 +35,8 @@ const (
 
 // getVerbosity defaults verbosity to LogLevelWarning if a verbosity is not set
 func getVerbosity() Level {
+	logMu.RLock()
+	defer logMu.RUnlock()
 	if !verbositySet {
 		return LevelWarning
 	}
@@ -39,20 +45,27 @@ func getVerbosity() Level {
 
 // SetLogLevel sets log level
 func SetLogLevel(l Level) {
+	logMu.Lock()
+	defer logMu.Unlock()
 	verbosity = l
 	verbositySet = true
 }
 
 // SetLogger sets Logger
 func SetLogger(l *golog.Logger) {
+	logMu.Lock()
+	defer logMu.Unlock()
 	logger = l
 }
 
 func printLog(message string) {
-	if logger != nil {
-		logger.Println(message)
+	logMu.RLock()
+	l := logger
+	logMu.RUnlock()
+	if l != nil {
+		l.Println(message)
 	} else {
-		println("[" + time.Now().Format("2006-01-02-15:04:05.000000") + "] " + message)
+		println("[" + time.Now().Format(time.RFC3339Nano) + "] " + message)
 	}
 }
 
