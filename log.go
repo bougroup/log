@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
-	"time"
 )
 
 // logMu guards the logger/verbosity configuration below so SetLogLevel and
@@ -58,45 +57,53 @@ func SetLogger(l *golog.Logger) {
 	logger = l
 }
 
-func printLog(message string) {
+// printLine writes an already-formatted line to the configured logger, or to
+// stderr when none is set.
+func printLine(line string) {
 	logMu.RLock()
 	l := logger
 	logMu.RUnlock()
 	if l != nil {
-		l.Println(message)
+		l.Println(line)
 	} else {
-		println("[" + time.Now().Format(time.RFC3339Nano) + "] " + message)
+		println(line)
 	}
+}
+
+// caller returns the "file:line" of the logging call site, skip frames up.
+func caller(skip int) string {
+	_, fn, line, ok := runtime.Caller(skip)
+	if !ok {
+		return "?"
+	}
+	return fmt.Sprintf("%s:%d", filepath.Base(fn), line)
 }
 
 // Info prints out informational messages
 func Info(message string) {
 	if getVerbosity() >= LevelInfo {
-		printLog(message)
+		emit([]Field{{"time", now()}, {"level", "info"}, {"msg", message}})
 	}
 }
 
 // Error prints out error messages
 func Error(message string) {
 	if getVerbosity() >= LevelError {
-		_, fn, line, _ := runtime.Caller(1)
-		printLog(fmt.Sprintf("ERROR: %s (%s:%d)", message, filepath.Base(fn), line))
+		emit([]Field{{"time", now()}, {"level", "error"}, {"msg", message}, {"caller", caller(2)}})
 	}
 }
 
 // Warn prints out warning messages
 func Warn(message string) {
 	if getVerbosity() >= LevelWarning {
-		_, fn, line, _ := runtime.Caller(1)
-		printLog(fmt.Sprintf("WARNING: %s (%s:%d)", message, filepath.Base(fn), line))
+		emit([]Field{{"time", now()}, {"level", "warning"}, {"msg", message}, {"caller", caller(2)}})
 	}
 }
 
 // Test prints out debugging or test messages
 func Test(message string) {
 	if getVerbosity() == LevelTest {
-		_, fn, line, _ := runtime.Caller(1)
-		printLog(fmt.Sprintf("DEBUG: %s (%s:%d)", message, filepath.Base(fn), line))
+		emit([]Field{{"time", now()}, {"level", "debug"}, {"msg", message}, {"caller", caller(2)}})
 	}
 }
 

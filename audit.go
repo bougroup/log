@@ -1,11 +1,5 @@
 package log
 
-import (
-	"fmt"
-	"strings"
-	"time"
-)
-
 // Outcome describes the result of an audited action. Audit trails care most
 // about the attempts that did not succeed — a denied or failed action is
 // often the whole reason the trail exists.
@@ -122,33 +116,22 @@ func (a *audit) Because(reason string) *audit {
 }
 
 // Emit writes the audit event. Audit events are always written, regardless of
-// the configured log level. Fields are rendered as logfmt-style key=value
-// pairs so the line stays human-readable while remaining machine-parseable.
+// the configured log level, and are rendered with the active output Format
+// (Logfmt by default, JSON via SetFormat).
 func (a *audit) Emit() {
-	fields := []string{
-		field("subject", a.who.typ+"/"+maskID(a.who.kind, a.who.id)),
-		field("action", a.action),
+	fields := []Field{
+		{"time", now()},
+		{"kind", "audit"},
+		{"subject", a.who.typ + "/" + maskID(a.who.kind, a.who.id)},
+		{"action", a.action},
+		{"object", a.what.typ + "/" + maskID(a.what.kind, a.what.id)},
 	}
-
-	fields = append(fields, field("object", a.what.typ+"/"+maskID(a.what.kind, a.what.id)))
-
 	if a.source != "" {
-		fields = append(fields, field("source", a.source))
+		fields = append(fields, Field{"source", a.source})
 	}
-	fields = append(fields, field("outcome", string(a.outcome)))
+	fields = append(fields, Field{"outcome", string(a.outcome)})
 	if a.reason != "" {
-		fields = append(fields, field("reason", a.reason))
+		fields = append(fields, Field{"reason", a.reason})
 	}
-	fields = append(fields, field("at", time.Now().Format(time.RFC3339)))
-
-	printLog("AUDIT: " + strings.Join(fields, " "))
-}
-
-// field renders a logfmt key=value pair, quoting the value when it contains a
-// space or quote so the pair survives parsing.
-func field(key, value string) string {
-	if strings.ContainsAny(value, ` "`) {
-		return fmt.Sprintf("%s=%q", key, value)
-	}
-	return key + "=" + value
+	emit(fields)
 }

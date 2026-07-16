@@ -27,6 +27,12 @@ func ExampleAudit_minimal() {
 	).Emit()
 }
 
+// ExampleSetFormat switches output to JSON for ingestion by JSON-aware log
+// tooling such as Dozzle or a Loki pipeline; the default is Logfmt.
+func ExampleSetFormat() {
+	log.SetFormat(log.JSON)
+}
+
 // ExampleSetAuditMaskOptions configures the masking policy once at startup. It
 // then applies to every audit record; if never called, sensible defaults apply.
 func ExampleSetAuditMaskOptions() {
