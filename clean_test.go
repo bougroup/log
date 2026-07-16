@@ -1,6 +1,8 @@
 package log
 
 import (
+	"io"
+	golog "log"
 	"sync"
 	"testing"
 )
@@ -54,10 +56,14 @@ func resetAuditMask() {
 	auditMask = maskOptions{char: '*', revealLast: 4, keepDomain: true}
 }
 
-// TestConcurrentConfig exercises both configs under concurrent readers and
-// writers; run with -race to catch unguarded access.
+// TestConcurrentConfig exercises the logger, mask, and format configs under
+// concurrent readers and writers; run with -race to catch unguarded access.
+// Output is routed to a discard logger to keep the test quiet.
 func TestConcurrentConfig(t *testing.T) {
 	defer resetAuditMask()
+	SetLogger(golog.New(io.Discard, "", 0))
+	defer SetLogger(nil)
+	defer SetFormat(Logfmt)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
@@ -67,10 +73,11 @@ func TestConcurrentConfig(t *testing.T) {
 			if i%2 == 0 {
 				SetLogLevel(LevelInfo)
 				SetAuditMaskOptions(MaskChar('#'), RevealLast(2))
+				SetFormat(JSON)
 			} else {
 				_ = getVerbosity()
 				_ = maskID(Email, "david@acme.com")
-				_ = maskID(Phone, "+2348012345678")
+				emit([]Field{{"k", "v"}})
 			}
 		}(i)
 	}
